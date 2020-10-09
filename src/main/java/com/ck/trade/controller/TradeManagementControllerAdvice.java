@@ -1,4 +1,4 @@
-package com.ck.trade.service;
+package com.ck.trade.controller;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -17,7 +17,7 @@ import com.ck.trade.exception.TradeValidationException;
  */
 @ControllerAdvice
 @RequestMapping(produces = "application/json")
-public class TradingControlerAdvice extends ResponseEntityExceptionHandler {
+public class TradeManagementControllerAdvice extends ResponseEntityExceptionHandler {
 	@ExceptionHandler(TradeValidationException.class)
 	public ResponseEntity<String> validationFailed(final TradeValidationException e) {
 		return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_ACCEPTABLE);
@@ -26,6 +26,11 @@ public class TradingControlerAdvice extends ResponseEntityExceptionHandler {
 	@ExceptionHandler(TradeNotFoundException.class)
 	public ResponseEntity<String> notFoundException(final TradeNotFoundException e) {
 		return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
+	}
+	
+	@ExceptionHandler(Exception.class)
+	public ResponseEntity<String> allException(final Exception e) {
+		return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
 	}
 
 }

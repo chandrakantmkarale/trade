@@ -9,23 +9,24 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
+import com.ck.trade.controller.TradeManagementController;
 import com.ck.trade.exception.TradeNotFoundException;
 import com.ck.trade.exception.TradeValidationException;
 import com.ck.trade.model.Trade;
-import com.ck.trade.service.TradingControler;
+import com.ck.trade.transport.rest.dto.TradeDTO;
 
 @SpringBootTest
 class TradeApplicationTests {
 	private static final long ONE_DAY_MSEC = 24 * 60 * 60 * 1000L;
 	@Autowired
-	TradingControler tradeController;
+	TradeManagementController tradeController;
 
 	@Test
 	void testSaveTrade_success() throws TradeValidationException, TradeNotFoundException {
 		ResponseEntity<String> responseEntity = tradeController.saveTrade(getTradeObjectWithFutureMaturity("T1", 1));
 		Assertions.assertEquals(ResponseEntity.status(HttpStatus.CREATED).build(), responseEntity);
 		// Created
-		Trade trade = tradeController.getTrade("T1");
+		TradeDTO trade = tradeController.getTrade("T1");
 		// Id Check
 		Assertions.assertEquals("T1", trade.getId());
 	}
@@ -70,8 +71,8 @@ class TradeApplicationTests {
 		return trade;
 	}
 
-	private Trade getTradeObject(String tradeId, int version) {
-		Trade trade = new Trade();
+	private TradeDTO getTradeObject(String tradeId, int version) {
+		TradeDTO trade = new TradeDTO();
 		trade.setId(tradeId);
 		trade.setBookId("bookdId-01");
 		trade.setVersion(version);
@@ -81,20 +82,44 @@ class TradeApplicationTests {
 		return trade;
 	}
 
-	private Trade getTradeObjectWithFutureMaturity(String tradeId, int version) {
-		Trade trade = getTradeObject(tradeId, version);
+	private TradeDTO getTradeObjectWithFutureMaturity(String tradeId, int version) {
+		TradeDTO trade = getTradeObject(tradeId, version);
 		Date futureDate = new Date(System.currentTimeMillis() + ONE_DAY_MSEC);
 		trade.setMaturityDate(futureDate);
 		return trade;
 
 	}
 
-	private Trade getTradeObjectWithExpiredMaturity(String tradeId, int version) {
-		Trade trade = getTradeObject(tradeId, version);
+	private TradeDTO getTradeObjectWithExpiredMaturity(String tradeId, int version) {
+		TradeDTO trade = getTradeObject(tradeId, version);
 		Date backDate = new Date(System.currentTimeMillis() - ONE_DAY_MSEC);
 		trade.setMaturityDate(backDate);
 		return trade;
 
 	}
+
+	
+	
+	/**
+	 * 
+	 * { "id":"100", "version":"1", "counterPartyId":"cp1", "bookId":"bkid-01",
+	 * "maturityDate":"04/10/2020", "isExpired":"false" }
+	 */
+
+	/**
+	 * [ { "id": "100", "version": 1, "counterPartyId": "cp1", "bookId": "bkid-01",
+	 * "maturityDate": "2020-10-05T00:00:00.000+00:00", "createdDate":
+	 * "2020-10-04T11:51:37.784+00:00", "expired": false }, { "id": "101",
+	 * "version": 1, "counterPartyId": "cp1", "bookId": "bkid-01", "maturityDate":
+	 * "2020-10-05T00:00:00.000+00:00", "createdDate":
+	 * "2020-10-04T11:52:33.608+00:00", "expired": false } ]
+	 */
+
+	/**
+	 * 
+	 * create table trade (id varchar(255) not null, book_id varchar(255),
+	 * counter_party_id varchar(255), created_date timestamp, is_expired boolean not
+	 * null, maturity_date timestamp, version integer not null, primary key (id))
+	 */
 
 }

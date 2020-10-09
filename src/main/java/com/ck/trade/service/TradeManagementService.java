@@ -1,25 +1,23 @@
-package com.ck.trade.service; 
+package com.ck.trade.service;
 
 import java.util.Date;
 import java.util.List;
+import java.util.Optional;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import com.ck.trade.TradeDaoImpl;
+import com.ck.trade.TradeRepository;
 import com.ck.trade.exception.ErrorCode;
 import com.ck.trade.exception.TradeNotFoundException;
 import com.ck.trade.exception.TradeValidationException;
 import com.ck.trade.model.Trade;
 
 @Service
-public class TradingService {
-	
+public class TradeManagementService {
 
 	@Autowired
-	TradeDaoImpl tradeRepo;
+	TradeRepository tradeRepo;
 
 	public void persist(Trade trade) {
 		trade.setCreatedDate(new Date());
@@ -30,19 +28,38 @@ public class TradingService {
 		return tradeRepo.findAll();
 	}
 
-
+	public boolean exists(String tradeId) {
+		return tradeRepo.existsById(tradeId);
+	}
 
 	public Trade getTrade(String tradeId) {
-		return tradeRepo.find(tradeId);
+		return tradeRepo.getOne(tradeId);
 	}
 
 	public boolean validate(Trade trade) throws TradeNotFoundException, TradeValidationException {
-		isMaturityDateValid(trade);
-		Trade tradeResult = tradeRepo.find(trade.getId());
-		if (tradeResult != null) {
-				return checkVersion(trade, tradeResult);
+		Optional<Trade> tradeResult = tradeRepo.findById(trade.getId());
+		if (tradeResult.isPresent()) {
+			return checkVersion(trade, tradeResult.get());
 		} else {
-				throw new TradeNotFoundException(trade.getId());
+			throw new TradeNotFoundException(trade.getId());
+		}
+	}
+
+	public void saveTrade(Trade receivedTrade) throws TradeValidationException {
+		boolean isValidMaturityDate = TradeValidator.isMaturityDateValid(receivedTrade,new Date());
+		if (!isValidMaturityDate) {
+			throw new TradeValidationException(ErrorCode.ERR_TRADE_WITH_LESS_MATURITYDATE, receivedTrade.getId());
+		}
+		boolean exists = exists(receivedTrade.getId());
+		if (!exists) {
+			// Trade Does not exists.Persist
+			persist(receivedTrade);
+		} else {
+			Trade existingTrade = getTrade(receivedTrade.getId());
+			// Trade exists. Check version.
+			checkVersion(receivedTrade, existingTrade);
+			// Version OK. Persist
+			persist(receivedTrade);
 		}
 	}
 
@@ -56,34 +73,5 @@ public class TradingService {
 			return true;
 		}
 		throw new TradeValidationException(ErrorCode.ERR_OLD_TRADE_VERSION, saved.getId());
-	}
-
-	// 2. Store should not allow the trade which has less maturity date then today
-	// date
-	public boolean isMaturityDateValid(Trade trade) throws TradeValidationException {
-		if (trade.getMaturityDate().before(new Date())) {
-			return false;
-		} else {
-			return true;
-		}
-	}
-	
-	/**
-	 * 3. Update trades which have expired.
-	 *  @throws TradeValidationException 
-	 */
-	public void updateTrade()  {
-		//TODO: scheduled invocation?
-		List<Trade> tradeList = tradeRepo.findAll();
-		for (Trade trade : tradeList) {
-				try {
-					isMaturityDateValid(trade);
-				} catch (TradeValidationException e) {
-					//Expire the trade
-					trade.setExpired(true);
-					tradeRepo.save(trade);
-				}
-				
-		}
 	}
 }
