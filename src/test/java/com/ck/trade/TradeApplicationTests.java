@@ -43,15 +43,12 @@ class TradeApplicationTests {
 	void testSaveTrade_oldversion_failure() throws TradeValidationException {
 		ResponseEntity<String> responseEntity = tradeController.saveTrade(getTradeObjectWithFutureMaturity("T5", 5));
 		Assertions.assertEquals(ResponseEntity.status(HttpStatus.CREATED).build(), responseEntity);
-		//Saving with older version
-		Assertions.assertThrows(TradeValidationException.class, () -> {
+		//Allow Saving with older version
+		Assertions.assertDoesNotThrow(() -> {
 			tradeController.saveTrade(getTradeObjectWithFutureMaturity("T5", 1));
 		});
 	
 	}
-	
-	
-	
 
 	Trade getActiveTradeObject(String id, int version, String counterPartyId, String bookId, Date maturityDate) {
 		Trade trade = new Trade();

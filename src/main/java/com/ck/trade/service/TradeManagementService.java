@@ -9,7 +9,6 @@ import org.springframework.stereotype.Service;
 
 import com.ck.trade.TradeRepository;
 import com.ck.trade.exception.ErrorCode;
-import com.ck.trade.exception.TradeNotFoundException;
 import com.ck.trade.exception.TradeValidationException;
 import com.ck.trade.model.Trade;
 
@@ -25,7 +24,7 @@ public class TradeManagementService {
 	}
 
 	public List<Trade> findAll() {
-		return tradeRepo.findAll();
+		return (List<Trade>) tradeRepo.findAll();
 	}
 
 	public boolean exists(String tradeId) {
@@ -33,16 +32,8 @@ public class TradeManagementService {
 	}
 
 	public Trade getTrade(String tradeId) {
-		return tradeRepo.getOne(tradeId);
-	}
-
-	public boolean validate(Trade trade) throws TradeNotFoundException, TradeValidationException {
-		Optional<Trade> tradeResult = tradeRepo.findById(trade.getId());
-		if (tradeResult.isPresent()) {
-			return checkVersion(trade, tradeResult.get());
-		} else {
-			throw new TradeNotFoundException(trade.getId());
-		}
+		Optional<Trade> trade =tradeRepo.findById(tradeId);
+		return trade.get();
 	}
 
 	public void saveTrade(Trade receivedTrade) throws TradeValidationException {
@@ -57,7 +48,7 @@ public class TradeManagementService {
 		} else {
 			Trade existingTrade = getTrade(receivedTrade.getId());
 			// Trade exists. Check version.
-			checkVersion(receivedTrade, existingTrade);
+			//checkVersion(receivedTrade, existingTrade);
 			// Version OK. Persist
 			persist(receivedTrade);
 		}

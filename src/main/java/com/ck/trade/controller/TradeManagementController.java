@@ -45,12 +45,9 @@ public class TradeManagementController {
 	@GetMapping("/trades/{id}")
 	public TradeDTO getTrade(@PathVariable String id) throws TradeNotFoundException {
 		Trade trade = tService.getTrade(id);
-		if (trade != null) {
-
-			return tradeMapper.convertToDTO(trade);
-		} else {
+		if (trade == null) {
 			throw new TradeNotFoundException(id);
 		}
-
+		return tradeMapper.convertToDTO(trade);
 	}
 }

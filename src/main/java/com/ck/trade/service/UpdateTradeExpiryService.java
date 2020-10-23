@@ -26,7 +26,7 @@ public class UpdateTradeExpiryService {
 	public void updateTrade() {
 		Date tillDate = new Date();
 		log.info("Setting expired=true for all trades expired till "+tillDate);
-		List<Trade> tradeList =tradeRepo.findAllWithMaturityDateBefore(tillDate);
+		List<Trade> tradeList =tradeRepo.findAllWithMaturityDateGreaterThanEqual(tillDate);
 		for (Trade trade : tradeList) {
 			boolean isMaturityDateValid = TradeValidator.isMaturityDateValid(trade, tillDate);
 			if (!isMaturityDateValid) {
